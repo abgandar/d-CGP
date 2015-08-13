@@ -100,60 +100,82 @@ inline unsigned int factorial(unsigned int n)
     return ret;
 }
 
-
-/// Computes the derivatives of the expression
+/// Accesses the derivatives of the expression
 /** 
- * Using automated differentiation rules this method returns the derivatives up to a certain order, with respect
- * to one input variable at a given point.
+ * This method extracts a given derivative from a DA expression.
  *
- * \param[in] wrt index of the derivation variable (0,1 ..., m_n)
- * \param[in] order the derivative order we want to compute
- * \param[in] in std::vector containing the point coordinates we want the derivatives be computed at
+ * \param[in] wrt array of variable indeces (0,1 ..., m_n) with respect to which to differentiate
+ * \param[in] exp std::vector containing the DA expansion around the point where we want to compute the derivative
  *
- * @returns std::vector<std::vector<double> > containing the value of f,f',f'' ..., at the point in
+ * @returns std::vector<double> containing the requested derivative of exp at the expansion point
  *
  * @throw dcgp::input_error 
  */
-std::vector<std::vector<double> > expression::differentiate(unsigned int wrt, unsigned int order, const std::vector<double>& in) const
+std::vector<double> expression::differentiate(const std::vector<unsigned int>& wrt, std::vector<DACE::DA> exp) const
+{
+    for (auto i : wrt)
+    {
+        if (i>=m_n)
+        {
+            throw input_error("Derivative id is larger than the independent variable number");
+        }
+        for (auto j = 0u; j<m_m; ++j)
+        {
+            exp[j] = exp[j].deriv(i+1u);
+        }
+    }
+
+    std::vector<double> res(m_m);
+    for (auto j = 0u; j<m_m; ++j)
+    {
+        res[j] = cons(exp[j]);
+    }
+
+    return res;
+}
+
+/// Computes the derivatives of the expression
+/** 
+ * Using differential algebra this method returns a DA expression containing all derivative at a given point.
+ *
+ * \param[in] wrt array of variable indeces (0,1 ..., m_n) with respect to which to differentiate
+ * \param[in] in std::vector containing the point coordinates we want the derivative to be computed at
+ *
+ * @returns std::vector<double> containing the requested derivative of f at the point in
+ *
+ * @throw dcgp::input_error 
+ */
+std::vector<DACE::DA> expression::differentiate(const std::vector<double>& in) const
 {  
-    if(in.size() != m_n)
+    if (in.size() != m_n)
     {
         throw input_error("Input size is incompatible");
     }
-    if(wrt >= m_n)
-    {
-        throw input_error("Derivative id is larger than the independent variable number");
-    }
-//for (auto i : m_active_nodes) std::cout << " " << i; std::cout << std::endl;
-    std::vector<double> dumb(m_m);
-    std::vector<std::vector<double> > retval(order+1,dumb);
-    std::map<unsigned int, std::vector<double> > node_jet;
-    for (auto j =0u; j<=order; ++j)
-    {
-        for (auto i : m_active_nodes)
-        {
-            if (i < m_n) 
-            {
-                //if (j==0) node_jet[i] = std::vector<double>({in[i]});
-                if (j==0) node_jet[i].push_back(in[i]);
-                else if (j==1) node_jet[i].push_back((i==wrt) ? 1. : 0.);
-                else node_jet[i].push_back(0.);
-            } else {
-                unsigned int idx = (i - m_n) * 3;
-                if (j==0) node_jet[i] = std::vector<double>({m_f[m_x[idx]].m_df(node_jet[m_x[idx + 1]], node_jet[m_x[idx + 2]])});
-                else node_jet[i].push_back(m_f[m_x[idx]].m_df(node_jet[m_x[idx + 1]], node_jet[m_x[idx + 2]]));
-            }
-        }
-    }
-//std::cout << i << ", " << node_jet[i] << std::endl;
 
-    for (auto j = 0u; j<=order; ++j) {
-        for (auto i = 0u; i<m_m; ++i)
-        {
-            retval[j][i] = node_jet[m_x[(m_r * m_c) * 3 + i]][j] * factorial(j);
-        }
+    std::vector<DACE::DA> inDA(m_n);
+    for (auto i = 0u; i < m_n; ++i)
+    {
+        inDA[i] = in[i] + DACE::DA(i+1);
     }
-    return retval;
+    return this->operator()(inDA);
+}
+
+/// Computes the derivatives of the expression
+/** 
+ * Using differential algebra this method returns a given derivative at a given point.
+ * If several derivatives are needed at the same point, cache the result of differentiate(in)
+ * and use differentiate(wrt,exp) on it repeatedly with different values for wrt.
+ *
+ * \param[in] wrt array of variable indeces (0,1 ..., m_n) with respect to which to differentiate
+ * \param[in] in std::vector containing the point coordinates we want the derivative to be computed at
+ *
+ * @returns std::vector<double> containing the requested derivative of f at the point in
+ *
+ * @throw dcgp::input_error 
+ */
+std::vector<double> expression::differentiate(const std::vector<unsigned int>& wrt, const std::vector<double>& in) const
+{  
+    return differentiate(wrt,differentiate(in));
 }
 
 /// Mutates one of the active genes

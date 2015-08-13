@@ -6,6 +6,8 @@
 #include <map>
 #include <random>
 
+#include <DACE/DA.h>
+
 #include "basis_function.h"
 #include "exceptions.h"
 #include "rng.h"
@@ -109,7 +111,9 @@ public:
         return retval;
     }
 
-    std::vector<std::vector<double> > differentiate(unsigned int wrt, unsigned int degree, const std::vector<double>& in) const;
+    std::vector<double> differentiate(const std::vector<unsigned int>& wrt, std::vector<DACE::DA> exp) const;
+    std::vector<DACE::DA> differentiate(const std::vector<double>& in) const;
+    std::vector<double> differentiate(const std::vector<unsigned int>& wrt, const std::vector<double>& in) const;
     std::string human_readable() const;
 
 protected: 

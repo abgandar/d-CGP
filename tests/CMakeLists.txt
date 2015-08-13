@@ -1,19 +1,19 @@
 ADD_EXECUTABLE(test_compute test_compute.cpp)
-TARGET_LINK_LIBRARIES(test_compute ${MANDATORY_LIBRARIES} dcgp_s)
+TARGET_LINK_LIBRARIES(test_compute ${MANDATORY_LIBRARIES} dcgp_s ${LIBRARIES_4_STATIC})
 ADD_TEST(test_compute test_compute)
 
 ADD_EXECUTABLE(test_torture_mutate test_torture_mutate.cpp)
-TARGET_LINK_LIBRARIES(test_torture_mutate ${MANDATORY_LIBRARIES} dcgp_s)
+TARGET_LINK_LIBRARIES(test_torture_mutate ${MANDATORY_LIBRARIES} dcgp_s ${LIBRARIES_4_STATIC})
 ADD_TEST(test_torture_mutate test_torture_mutate)
 
 ADD_EXECUTABLE(test_simple_data_fit test_simple_data_fit.cpp)
-TARGET_LINK_LIBRARIES(test_simple_data_fit ${MANDATORY_LIBRARIES} dcgp_s)
+TARGET_LINK_LIBRARIES(test_simple_data_fit ${MANDATORY_LIBRARIES} dcgp_s ${LIBRARIES_4_STATIC})
 ADD_TEST(test_simple_data_fit test_simple_data_fit)
 
 ADD_EXECUTABLE(test_evolving_simple_expressions test_evolving_simple_expressions.cpp)
-TARGET_LINK_LIBRARIES(test_evolving_simple_expressions ${MANDATORY_LIBRARIES} dcgp_s)
+TARGET_LINK_LIBRARIES(test_evolving_simple_expressions ${MANDATORY_LIBRARIES} dcgp_s ${LIBRARIES_4_STATIC})
 ADD_TEST(test_evolving_simple_expressions test_evolving_simple_expressions)
 
 ADD_EXECUTABLE(test_automated_differentiation test_automated_differentiation.cpp)
-TARGET_LINK_LIBRARIES(test_automated_differentiation ${MANDATORY_LIBRARIES} dcgp_s)
+TARGET_LINK_LIBRARIES(test_automated_differentiation ${MANDATORY_LIBRARIES} dcgp_s ${LIBRARIES_4_STATIC})
 ADD_TEST(test_automated_differentiation test_automated_differentiation)

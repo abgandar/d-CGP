@@ -4,6 +4,7 @@
 #include <cmath>
 #include <string>
 #include "../src/dcgp.h"
+#include "../src/exceptions.h"
 
 std::vector<double> numeric_d(const dcgp::expression& ex, unsigned int wrt,  const std::vector<double>& in)
 {
@@ -57,6 +58,7 @@ bool test_fails(
 {
     // A random expression
     dcgp::expression ex(n, m, r, c, l, f_set);
+    DACE::DA::init(2,n);    // at most 2 derivatives
     /// Number of failed attempts
     double fail_count = 0;
     // We create the symbolic variables in case output is needed
@@ -73,43 +75,58 @@ bool test_fails(
         {
             random_in[i] = std::uniform_real_distribution<double>(-1., 1)(re);
         }
+        try {
+            std::vector<DACE::DA> exp = ex.differentiate(random_in);
 
-        // For each of the input variables
-        for (auto i = 0u; i < n; ++i)
-        {
-            // Compute f, f' and f'' using automated differentiation
-            std::vector<std::vector<double> > jet = ex.differentiate(i,2,random_in);
-            // Compute f' anf f'' using numerical differentiation
-            std::vector<double> df = numeric_d(ex, i, random_in);
-            std::vector<double> ddf = numeric_d2 (ex, i, random_in);
-            // Compare the results
-            for (auto k = 0u; k < df.size(); ++k)
+            // For each of the input variables
+            for (auto i = 0u; i < n; ++i)
             {
-                if (fabs(jet[1][k]) < 100) // we skip the test if the derivative is approaching infinity (numerical diff would fail)
+                // Compute f, f' and f'' using automated differentiation
+                std::vector<double> dfDA = ex.differentiate({i},exp);
+                std::vector<double> ddfDA = ex.differentiate({i,i},exp);
+                // Compute f' anf f'' using numerical differentiation
+                std::vector<double> df = numeric_d(ex, i, random_in);
+                std::vector<double> ddf = numeric_d2 (ex, i, random_in);
+                // Compare the results
+                for (auto k = 0u; k < df.size(); ++k)
                 {
-                    if (fabs(jet[1][k] - df[k]) > std::max(1e-3 * fabs(jet[1][i]), 1e-3)) {
-                        std::cout << "Failed First derivative wrt: " << i << "\n";
-                        std::cout << "Point: " << random_in << "\n";
-                        std::cout << "Expression: " << ex(in_sym) << "\n";
-                        std::cout << "Expression: " << ex(random_in) << "\n";
-                        std::cout << "Automated differentiation: " << jet[1] << "\n";
-                        std::cout << "Numerical differentiation: " << df << "\n";
-                        fail_count++;
+                    if (fabs(dfDA[k]) < 100) // we skip the test if the derivative is approaching infinity (numerical diff would fail)
+                    {
+                        if (fabs(dfDA[k] - df[k]) > std::max(1e-3 * fabs(dfDA[k]), 1e-3)) {
+                            std::cout << "Failed First derivative wrt: " << i << "\n";
+                            std::cout << "Point: " << random_in << "\n";
+                            std::cout << "Expression: " << ex(in_sym) << "\n";
+                            std::cout << "Expression: " << ex(random_in) << "\n";
+                            std::cout << "Expression: " << exp << "\n";
+//                            std::cout << "Expression: " << ex << "\n";
+                            std::cout << "Automated differentiation: " << dfDA[k] << "\n";
+                            std::cout << "Numerical differentiation: " << df[k] << "\n";
+                            fail_count++;
+                        }
                     }
-                }
-                if (fabs(jet[2][k]) < 100) // we skip the test if the derivative is approaching infinity (numerical diff would fail)
-                {
-                    if (fabs(jet[2][k] - ddf[k]) > std::max(1e-3 * fabs(jet[2][i]), 1e-3)) {    
-                        std::cout << "Failed Second derivative wrt: " << i << "\n";
-                        std::cout << "Point: " << random_in << "\n";
-                        std::cout << "Expression: " << ex(in_sym) << "\n";
-                        std::cout << "Expression: " << ex(random_in) << "\n";
-                        std::cout << "Automated differentiation: " << jet[2] << "\n";
-                        std::cout << "Numerical differentiation: " << ddf << "\n";
-                        fail_count++;
+                    if (fabs(ddfDA[k]) < 100) // we skip the test if the derivative is approaching infinity (numerical diff would fail)
+                    {
+                        if (fabs(ddfDA[k] - ddf[k]) > std::max(1e-3 * fabs(ddfDA[k]), 1e-3)) {    
+                            std::cout << "Failed Second derivative wrt: " << i << "\n";
+                            std::cout << "Point: " << random_in << "\n";
+                            std::cout << "Expression: " << ex(in_sym) << "\n";
+                            std::cout << "Expression: " << ex(random_in) << "\n";
+                            std::cout << "Expression: " << exp << "\n";
+//                            std::cout << "Expression: " << ex << "\n";
+                            std::cout << "Automated differentiation: " << ddfDA[k] << "\n";
+                            std::cout << "Numerical differentiation: " << ddf[k] << "\n";
+                            fail_count++;
+                        }
                     }
                 }
             }
+        } catch( dcgp::derivative_error E )
+        {
+            std::cout << E.what() << " (not counted as failure)\n";
+            std::cout << "Point: " << random_in << "\n";
+            std::cout << "Expression: " << ex(in_sym) << "\n";
+            std::cout << "Expression: " << ex(random_in) << "\n";
+//            std::cout << "Expression: " << ex << "\n";
         }
     }
     std::cout << "Number of failed attempts: " << fail_count/N << "\n";        
@@ -124,7 +141,7 @@ bool test_fails(
 /// Note that the test is very tolerant to differences (fail_count) as numerical (not automated) differentiation
 /// Sucks big time
 int main() {
-    dcgp::function_set test_function_set({"sum","diff","mul","div","pow"});
+    dcgp::function_set test_function_set({"sum","diff","mul","div","sqrt","exp","log","sin","cos","tan","asin","acos","atan","sinh","cosh","tanh"});
     return test_fails(2,4,2,3,4, test_function_set(), 1000) ||
            test_fails(2,4,10,10,11, test_function_set(), 1000) ||
            test_fails(2,4,20,20,21, test_function_set(), 1000) ||

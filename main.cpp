@@ -1,12 +1,14 @@
 #include <iostream>
 #include <iomanip>
 #include <ctime>
-#include "src/dcgp.h"
 
+#include <DACE/DA.h>
+
+#include "src/dcgp.h"
 
 int main() {
     // We define the set of functions we want to use
-    dcgp::function_set basic_set({"sum","diff","mul","div"});
+    dcgp::function_set basic_set({"sum","diff","mul","div","sqrt"});
 
     // We instantiate a d-CGP expression
     unsigned int n_inputs = 3;
@@ -16,6 +18,10 @@ int main() {
     unsigned int n_level_backs = 4;
     dcgp::expression simple(n_inputs,n_outputs,n_rows,n_columns,n_level_backs,basic_set());
 
+    // initialize DACE to handle derivatives up to order n_derivatives in n_inputs variables
+    unsigned int n_derivatives = 3;
+    DACE::DA::init(n_derivatives,n_inputs);
+
     // We inspect it
     std::cout << simple << std::endl;
 
@@ -24,14 +30,25 @@ int main() {
     std::cout << "Point is:" << in_num << std::endl;
     std::cout << "Numerical value = " << simple(in_num) << std::endl;
 
-    std::vector<std::vector<double> > jet_0 = simple.differentiate(0,2,in_num);
-    std::cout << "Numerical values d^n/dx^n = " << jet_0 << std::endl;
+    std::vector<DACE::DA> deriv = simple.differentiate(in_num);
+    
+    std::vector<double> jet_0 = simple.differentiate({0,0},deriv);
+    std::cout << "Numerical values d^2/dx^2 = " << jet_0 << std::endl;
 
-    std::vector<std::vector<double> > jet_1 = simple.differentiate(1,2,in_num);
-    std::cout << "Numerical values d^n/dy^n = " << jet_1 << std::endl;
+    std::vector<double> jet_1 = simple.differentiate({1,1},deriv);
+    std::cout << "Numerical values d^2/dy^2 = " << jet_1 << std::endl;
 
-    std::vector<std::vector<double> > jet_2 = simple.differentiate(2,2,in_num);
-    std::cout << "Numerical values d^n/dz^n = " << jet_2 << std::endl;
+    std::vector<double> jet_2 = simple.differentiate({2,2},deriv);
+    std::cout << "Numerical values d^2/dz^2 = " << jet_2 << std::endl;
+
+    std::vector<double> jet_3 = simple.differentiate({0,1},deriv);
+    std::cout << "Numerical values d^2/dxdy = " << jet_3 << std::endl;
+
+    std::vector<double> jet_4 = simple.differentiate({1,2},deriv);
+    std::cout << "Numerical values d^2/dydz = " << jet_4 << std::endl;
+
+    std::vector<double> jet_5 = simple.differentiate({0,2},deriv);
+    std::cout << "Numerical values d^2/dxdz = " << jet_5 << std::endl;
 
     // We stream a symbolic representation of the expression
     std::vector<std::string> in_sym({"x","y","z"});

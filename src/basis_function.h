@@ -6,10 +6,12 @@
 #include <iostream>
 #include <vector>
 
+#include <DACE/DA.h>
+
 namespace dcgp {
 
 using my_fun_type = std::function<double(double, double)>;
-using d_my_fun_type = std::function<double(const std::vector<double> &, const std::vector<double> &)>;
+using d_my_fun_type = std::function<DACE::DA(const DACE::DA&, const DACE::DA&)>;
 using my_print_fun_type = std::function<std::string(std::string, std::string)>;
 
 /// Basis function
@@ -38,7 +40,18 @@ struct basis_function
     */
     double operator()(double x, double y) const
     {
-            return m_f(x,y);
+        return m_f(x,y);
+    }
+
+    /// Overload of operator(DA,DA)
+    /**
+    * Allows to call a dcgp::basis_function with the syntax f(DA x, DA y) and get
+    * the function value and all derivatives up to the current computation order in x,y in return
+    */
+    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const
+    {
+        // TODO (AW): this is a bit ugly, in most cases this should call the same m_f function, but templating does not work for std::function objects.
+        return m_df(x,y);
     }
 
     /// Overload of operator(std::string, std::string)
@@ -48,12 +61,12 @@ struct basis_function
     */
     std::string operator()(std::string x, std::string y) const
     {
-            return m_pf(x,y);
+        return m_pf(x,y);
     }
 
     /// The function
     my_fun_type m_f;
-    /// Its derivatives
+    /// The DA function
     d_my_fun_type m_df;
     /// Its symbolic representation
     my_print_fun_type m_pf;
