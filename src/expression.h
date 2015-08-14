@@ -6,7 +6,7 @@
 #include <map>
 #include <random>
 
-#include <DACE/DA.h>
+#include <DA/DA.h>
 
 #include "basis_function.h"
 #include "exceptions.h"
