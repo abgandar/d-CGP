@@ -8,7 +8,7 @@
 
 int main() {
     // We define the set of functions we want to use
-    dcgp::function_set basic_set({"sum","diff","mul","div","sqrt"});
+    dcgp::function_set basic_set = dcgp::function_set::basic;
 
     // We instantiate a d-CGP expression
     unsigned int n_inputs = 3;
@@ -16,7 +16,7 @@ int main() {
     unsigned int n_rows = 3;
     unsigned int n_columns = 7;
     unsigned int n_level_backs = 4;
-    dcgp::expression simple(n_inputs,n_outputs,n_rows,n_columns,n_level_backs,basic_set());
+    dcgp::expression simple(n_inputs,n_outputs,n_rows,n_columns,n_level_backs,basic_set);
 
     // initialize DACE to handle derivatives up to order n_derivatives in n_inputs variables
     unsigned int n_derivatives = 3;

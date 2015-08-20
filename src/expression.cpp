@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <sstream>
 #include <random>
@@ -28,7 +27,7 @@ expression::expression(unsigned int n,              // n. inputs
                    unsigned int r,                  // n. rows
                    unsigned int c,                  // n. columns
                    unsigned int l,                  // n. levels-back
-                   std::vector<basis_function> f,   // functions
+                   function_set f,                  // functions
                    unsigned int seed                // seed for the pseudo-random numbers
                    ) : m_n(n), m_m(m), m_r(r), m_c(c), m_l(l), m_f(f), m_lb((3 * m_r * m_c) + m_m, 0), m_ub((3 * m_r * m_c) + m_m, 0), m_x((3 * m_r * m_c) + m_m, 0), m_e(seed)
 {
@@ -243,14 +242,24 @@ void expression::update_active()
         {
             if (node_id >=m_n) // we insert the input nodes connections as they do not have any
             {
-                next.push_back(m_x[(node_id - m_n) * 3 + 1]);
-                next.push_back(m_x[(node_id - m_n) * 3 + 2]);
+                unsigned int idx = (node_id - m_n) * 3;
+                switch( m_f[m_x[idx]].m_type )
+                {
+                    case basis_function::FN_BINARY:
+                        next.push_back(m_x[idx+2]);
+                        // fall through
+                    case basis_function::FN_UNARY:
+                        next.push_back(m_x[idx+1]);
+                        // fall through
+                    case basis_function::FN_CONST:
+                        break;
+                }
             }
             else{
                 m_active_nodes.push_back(node_id);
             }
         }
-        // We remove duplicates to avoid processng them and thus having a 2^N complexity
+        // We remove duplicates to avoid processing them and thus having a 2^N complexity
         std::sort( next.begin(), next.end() );
         next.erase( std::unique( next.begin(), next.end() ), next.end() );
         current = next;

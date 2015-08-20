@@ -52,7 +52,7 @@ bool test_fails(
         unsigned int r,
         unsigned int c,
         unsigned int l,
-        std::vector<dcgp::basis_function> f_set,
+        dcgp::function_set &f_set,
         unsigned int N
         ) // number of samples
 {
@@ -141,12 +141,12 @@ bool test_fails(
 /// Note that the test is very tolerant to differences (fail_count) as numerical (not automated) differentiation
 /// Sucks big time
 int main() {
-    dcgp::function_set test_function_set({"sum","diff","mul","div","sqrt","exp","log","sin","cos","tan","asin","acos","atan","sinh","cosh","tanh"});
-    return test_fails(2,4,2,3,4, test_function_set(), 1000) ||
-           test_fails(2,4,10,10,11, test_function_set(), 1000) ||
-           test_fails(2,4,20,20,21, test_function_set(), 1000) ||
-           test_fails(1,1,1,100,101, test_function_set(), 1000) ||
-           test_fails(1,1,2,100,101, test_function_set(), 1000) ||
-           test_fails(1,1,3,100,101, test_function_set(), 1000);
+    dcgp::function_set test_function_set = dcgp::function_set::all;
+    return test_fails(2,4,2,3,4, test_function_set, 1000) ||
+           test_fails(2,4,10,10,11, test_function_set, 1000) ||
+           test_fails(2,4,20,20,21, test_function_set, 1000) ||
+           test_fails(1,1,1,100,101, test_function_set, 1000) ||
+           test_fails(1,1,2,100,101, test_function_set, 1000) ||
+           test_fails(1,1,3,100,101, test_function_set, 1000);
 }
 

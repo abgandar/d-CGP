@@ -9,6 +9,7 @@
 #include <DA/DA.h>
 
 #include "basis_function.h"
+#include "function_set.h"
 #include "exceptions.h"
 #include "rng.h"
 
@@ -30,7 +31,7 @@ public:
             unsigned int r, 
             unsigned int c, 
             unsigned int l, 
-            std::vector<basis_function> f, 
+            function_set f, 
             unsigned int seed = rng::get_seed()
             );
 
@@ -78,9 +79,9 @@ public:
     /** 
      * Gets the functions
      *
-     * \return an std::vector<basis_function>
+     * \return a function_set
     */
-    const std::vector<basis_function>& get_f() const {return m_f;};
+    const function_set& get_f() const {return m_f;};
 
     void mutate_active();
     
@@ -132,7 +133,7 @@ private:
     // number of levels_back allowed
     unsigned int m_l;
     // the functions allowed
-    std::vector<basis_function> m_f;
+    function_set m_f;
     // lower and upper bounds on all genes
     std::vector<unsigned int> m_lb;
     std::vector<unsigned int> m_ub;

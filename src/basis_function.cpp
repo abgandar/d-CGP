@@ -5,7 +5,6 @@
 
 namespace dcgp {
 
-
 /// Overload stream operator for dcgp::basis_function
 /**
  * @param[in] obj dcgp::basis_function to be inserted into the stream.
