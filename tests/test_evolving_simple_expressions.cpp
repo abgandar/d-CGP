@@ -12,6 +12,7 @@ bool test_fails(
         unsigned int N) // number of samples
 {
    dcgp::function_set basic_set = dcgp::function_set::basic;
+   //dcgp::function_set basic_set = {&dcgp::sum, &dcgp::diff, &dcgp::mul, &dcgp::div};
    dcgp::expression ex(1, 1, r, c, l, basic_set, 123);
 
     // 1) we create N data points 
