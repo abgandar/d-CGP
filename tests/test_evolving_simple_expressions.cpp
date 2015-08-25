@@ -12,6 +12,8 @@ bool test_fails(
         unsigned int N) // number of samples
 {
    dcgp::function_set basic_set = dcgp::function_set::basic;
+   //dcgp::function_set basic_set = dcgp::function_set::basic+dcgp::function_set::trig;
+   //dcgp::function_set basic_set = dcgp::function_set::all;
    //dcgp::function_set basic_set = {&dcgp::sum, &dcgp::diff, &dcgp::mul, &dcgp::div};
    dcgp::expression ex(1, 1, r, c, l, basic_set, 123);
 
@@ -37,7 +39,7 @@ bool test_fails(
     double best_fit = 0;
     std::vector<double> newfits(4,0.);
     std::vector<std::vector<unsigned int> > newchromosomes(4);
-    std::vector<unsigned int> best_chromosome;
+    std::vector<unsigned int> best_chromosome = ex.get();
     unsigned int gen = 0;
     do
     {
@@ -53,6 +55,7 @@ bool test_fails(
                 best_chromosome = newchromosomes[i];
             }
         }
+        ex.set(best_chromosome);        // \TODO: @Dario, shouldn't there be something like this here? If not this loop is just a random walk search. This line improves the search speed tremendously.
 
     } while (best_fit < N);
     ex.set(best_chromosome);

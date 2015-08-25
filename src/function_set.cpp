@@ -3,6 +3,34 @@
 
 namespace dcgp {
 
+/// Append a function to a function set
+/**
+ *  Append a function to a function set. Duplicate functions are not added.
+ */
+void function_set::push_back(const basis_function* f)
+{
+    const typename function_set::size_type size = this->size();
+
+    for(unsigned int i = 0; i < size; i++)
+        if(at(i)==f) return;
+    std::vector<const basis_function*>::push_back(f);
+}
+
+/// Append another function set to a function set
+/**
+ *  Merge another function set into this one by adding new functions at the end.
+ *  Duplicate functions are not added. The order of both function sets is
+ *  preserved.
+ */
+void function_set::push_back(const function_set& f)
+{
+    const typename function_set::size_type size = f.size();
+
+    reserve(this->size()+size);
+    for(unsigned int i = 0; i < size; i++)
+        push_back(f.at(i));
+}
+
 /// Overload stream insertion operator for function_set
 std::ostream &operator<<(std::ostream &os, const function_set &fs)
 {
@@ -17,6 +45,20 @@ std::ostream &operator<<(std::ostream &os, const function_set &fs)
     os << ']';
 
     return os;
+}
+
+/// Merge two function sets
+/**
+ *  Merge two function sets by concatenation. Duplicate functions of the second
+ *  set already present in the first are not added.
+ *  The order of both function sets is preserved.
+ */
+function_set operator+(const function_set& a, const function_set& b)
+{
+    function_set res(a);
+    res.push_back(b);
+
+    return res;
 }
 
 /// set of all predefined basis functions
