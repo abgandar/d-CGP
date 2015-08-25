@@ -84,7 +84,9 @@ public:
     const function_set& get_f() const {return m_f;};
 
     void mutate_active();
-    
+
+    std::vector<std::string> operator()(const std::vector<std::string>& in, bool simplify = false) const;
+ 
     template <class T>
     std::vector<T> operator()(const std::vector<T>& in) const
     {  
@@ -92,7 +94,6 @@ public:
         {
             throw input_error("Input size is incompatible");
         }
-//for (auto i : m_active_nodes) std::cout << " " << i; std::cout << std::endl;
         std::vector<T> retval(m_m);
         std::map<unsigned int, T> node;
         for (auto i : m_active_nodes) {
@@ -103,7 +104,6 @@ public:
                 unsigned int idx = (i - m_n) * 3;
                 node[i] = m_f[m_x[idx]](node[m_x[idx + 1]], node[m_x[idx + 2]]);
             }
-//std::cout << i << ", " << node[i] << std::endl;
         }
         for (auto i = 0u; i<m_m; ++i)
         {

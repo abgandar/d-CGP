@@ -52,11 +52,11 @@ class basis_function
     * Allows to call a dcgp::basis_function with the syntax f(std::string x, std::string y) and get
     * a symbolic representation of the function in the variables std::string x, std::string y
     */
-    virtual std::string operator()(std::string x, std::string y) const = 0;
+    virtual std::string operator()(const std::string s1, const std::string s2, bool simplify = false) const = 0;
 
     /// Its name
     std::string m_name;
-    /// Number of fn_type (input arguments)
+    /// Function type (number of input arguments)
     fn_type m_type;
 };
 
@@ -64,7 +64,7 @@ std::ostream& operator<<(std::ostream& os, const basis_function& obj);
 
 using my_fun_type = std::function<double(double, double)>;
 using d_my_fun_type = std::function<DACE::DA(const DACE::DA&, const DACE::DA&)>;
-using my_print_fun_type = std::function<std::string(std::string, std::string)>;
+using my_print_fun_type = std::function<std::string(const std::string, const std::string, bool)>;
 
 /// Basis functor
 /**
@@ -83,34 +83,13 @@ class basis_functor : public basis_function
     basis_functor(T &&f, U &&df, V&&pf, std::string name, fn_type type = FN_BINARY):basis_function(name,type), m_f(std::forward<T>(f)), m_df(std::forward<U>(df)), m_pf(std::forward<V>(pf)) {}
 
     /// Overload of operator(double, double)
-    /**
-    * Allows to call a dcgp::basis_function with the syntax f(double x, double y) and get
-    * the function value in x,y in return
-    */
-    double operator()(double x, double y) const
-    {
-        return m_f(x,y);
-    }
+    double operator()(double x, double y) const;
 
     /// Overload of operator(DA,DA)
-    /**
-    * Allows to call a dcgp::basis_function with the syntax f(DA x, DA y) and get
-    * the function value and all derivatives up to the current computation order in x,y in return
-    */
-    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const
-    {
-        return m_df(x,y);
-    }
+    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const;
 
     /// Overload of operator(std::string, std::string)
-    /**
-    * Allows to call a dcgp::basis_function with the syntax f(std::string x, std::string y) and get
-    * a symbolic representation of the function in the variables std::string x, std::string y
-    */
-    std::string operator()(std::string s1, std::string s2) const
-    {
-        return m_pf(s1,s2);
-    }
+    std::string operator()(const std::string s1, const std::string s2, bool simplify = false) const;
 
     /// The function
     my_fun_type m_f;
@@ -128,32 +107,19 @@ class basis_cons : public basis_function
     basis_cons(const double val = 1.0):basis_function("cons("+boost::lexical_cast<std::string>(val)+")",FN_CONST), m_val(val) {}
 
     /// Overload of operator(double, double)
-    double operator()(double x, double y) const 
-    {
-        (void)x;
-        (void)y;
-        return m_val;
-    }
+    double operator()(double x, double y) const;
 
     /// Overload of operator(DA,DA)
-    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const
-    {
-        (void)x;
-        (void)y;
-        return m_val;
-    }
+    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const;
 
     /// Overload of operator(std::string, std::string)
-    std::string operator()(std::string s1, std::string s2) const
-    {
-        (void)s1;
-        (void)s2;
-        return ("(" + boost::lexical_cast<std::string>(m_val) + ")");
-    }
+    std::string operator()(const std::string s1, const std::string s2, bool simplify = false) const;
 
     double m_val;
 };
+/// Global instance of the zero constant
 static const basis_cons zero(0.0);
+/// Global instance of the one constant
 static const basis_cons one(1.0);
 
 /// Addition
@@ -164,35 +130,15 @@ class basis_sum : public basis_function
     basis_sum():basis_function("sum",FN_BINARY) {}
 
     /// Overload of operator(double, double)
-    double operator()(double x, double y) const 
-    {
-        return x+y;
-    }
+    double operator()(double x, double y) const;
 
     /// Overload of operator(DA,DA)
-    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const
-    {
-        return x+y;
-    }
+    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const;
 
     /// Overload of operator(std::string, std::string)
-    std::string operator()(std::string s1, std::string s2) const
-    {
-        if (s1 == s2) 
-        {
-            return "(2*"+s1+")";
-        }
-        else if (s1 == "0")
-        {
-            return s2;
-        }
-        else if (s2 == "0")
-        {
-            return s1;
-        }
-        return ("(" + s1 + "+" + s2 + ")");
-    }
+    std::string operator()(const std::string s1, const std::string s2, bool simplify = false) const;
 };
+/// Global instance of the addition
 static const basis_sum sum;
 
 /// Subtraction
@@ -203,35 +149,15 @@ class basis_diff : public basis_function
     basis_diff():basis_function("diff",FN_BINARY) {}
 
     /// Overload of operator(double, double)
-    double operator()(double x, double y) const 
-    {
-        return x-y;
-    }
+    double operator()(double x, double y) const;
 
     /// Overload of operator(DA,DA)
-    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const
-    {
-        return x-y;
-    }
+    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const;
 
     /// Overload of operator(std::string, std::string)
-    std::string operator()(std::string s1, std::string s2) const
-    {
-        if (s1 == s2) 
-        {
-            return "0";
-        }
-        else if (s1 == "0")
-        {
-            return "(-" + s2 + ")";
-        }
-        else if (s2 == "0")
-        {
-            return s1;
-        }
-        return ("(" + s1 + "-" + s2 + ")");
-    }
+    std::string operator()(const std::string s1, const std::string s2, bool simplify = false) const;
 };
+/// Global instance of the subtraction
 static const basis_diff diff;
 
 /// Multiplication
@@ -242,39 +168,15 @@ class basis_mul : public basis_function
     basis_mul():basis_function("mul",FN_BINARY) {}
 
     /// Overload of operator(double, double)
-    double operator()(double x, double y) const 
-    {
-        return x*y;
-    }
+    double operator()(double x, double y) const;
 
     /// Overload of operator(DA,DA)
-    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const
-    {
-        return x*y;
-    }
+    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const;
 
     /// Overload of operator(std::string, std::string)
-    std::string operator()(std::string s1, std::string s2) const
-    {
-        if (s1 == "0" || s2 == "0")
-        {
-            return "0";
-        }
-        else if (s1 == s2)
-        {
-            return s1 + "^2";
-        }
-        else if (s1 == "1")
-        {
-            return s2;
-        }
-        else if (s2 == "1")
-        {
-            return s1;
-        }
-        return ("(" + s1 + "*" + s2 + ")");
-    }
+    std::string operator()(const std::string s1, const std::string s2, bool simplify = false) const;
 };
+/// Global instance of the multiplication
 static const basis_mul mul;
 
 /// Division
@@ -285,35 +187,15 @@ class basis_div : public basis_function
     basis_div():basis_function("div",FN_BINARY) {}
 
     /// Overload of operator(double, double)
-    double operator()(double x, double y) const 
-    {
-        return x/y;
-    }
+    double operator()(double x, double y) const;
 
     /// Overload of operator(DA,DA)
-    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const
-    {
-        if (cons(y)==0.0)
-        {
-            throw derivative_error("Derivative of div does not exist at this point");
-        }
-        return x/y;
-    }
+    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const;
 
     /// Overload of operator(std::string, std::string)
-    std::string operator()(std::string s1, std::string s2) const
-    {
-        if (s1 == "0" && s2 != "0")
-        {
-            return "0";
-        }
-        else if (s1 == s2 && s1 != "0")
-        {
-            return "1";
-        }
-        return ("(" + s1 + "/" + s2 + ")");
-    }
+    std::string operator()(const std::string s1, const std::string s2, bool simplify = false) const;
 };
+/// Global instance of the division
 static const basis_div div;
 
 /// Power
@@ -324,50 +206,15 @@ class basis_pow : public basis_function
     basis_pow():basis_function("pow",FN_BINARY) {}
 
     /// Overload of operator(double, double)
-    double operator()(double x, double y) const 
-    {
-        return pow(fabs(x),y);
-    }
+    double operator()(double x, double y) const;
 
     /// Overload of operator(DA,DA)
-    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const
-    {
-        if (cons(x)<0)
-        {
-            return exp(y*log(-x));
-        }
-        else if (cons(x)>0)
-        {
-            return exp(y*log(x));
-        }
-        else
-        {
-            throw derivative_error("Derivative of pow does not exist at this point");
-        }
-    }
+    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const;
 
     /// Overload of operator(std::string, std::string)
-    std::string operator()(std::string s1, std::string s2) const
-    {
-        if (s1 == "0" && s2 != "0")
-        {
-            return "0";
-        }
-        else if (s1 == "1")
-        {
-            return "1";
-        }
-        else if (s2 == "0" && s1 != "0")
-        {
-            return "1";
-        }
-        else if (s2 == "1")
-        {
-            return ("abs(" + s1 + ")");
-        }
-        return ("abs(" + s1 + ")^(" + s2 + ")");
-    }
+    std::string operator()(const std::string s1, const std::string s2, bool simplify = false) const;
 };
+/// Global instance of the power
 static const basis_pow pow;
 
 /// Square root
@@ -378,45 +225,15 @@ class basis_sqrt : public basis_function
     basis_sqrt():basis_function("sqrt",FN_UNARY) {}
 
     /// Overload of operator(double, double)
-    double operator()(double x, double y) const 
-    {
-        (void)y;
-        return sqrt(fabs(x));
-    }
+    double operator()(double x, double y) const;
 
     /// Overload of operator(DA,DA)
-    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const
-    {
-        (void)y;
-        if (cons(x)<0)
-        {
-            return sqrt(-x);
-        }
-        else if (cons(x)>0)
-        {
-            return sqrt(x);
-        }
-        else
-        {
-            throw derivative_error("Derivative of sqrt does not exist at this point");
-        }
-    }
+    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const;
 
     /// Overload of operator(std::string, std::string)
-    std::string operator()(std::string s1, std::string s2) const
-    {
-        (void)s2;
-        if (s1 == "0")
-        {
-            return "0";
-        }
-        else if (s1 == "1")
-        {
-            return "1";
-        }
-        return ("sqrt(abs(" + s1 + "))");
-    }
+    std::string operator()(const std::string s1, const std::string s2, bool simplify = false) const;
 };
+/// Global instance of the square root
 static const basis_sqrt sqrt;
 
 /// Exponential
@@ -427,30 +244,15 @@ class basis_exp : public basis_function
     basis_exp():basis_function("exp",FN_UNARY) {}
 
     /// Overload of operator(double, double)
-    double operator()(double x, double y) const 
-    {
-        (void) y;
-        return exp(x);
-    }
+    double operator()(double x, double y) const;
 
     /// Overload of operator(DA,DA)
-    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const
-    {
-        (void) y;
-        return exp(x);
-    }
+    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const;
 
     /// Overload of operator(std::string, std::string)
-    std::string operator()(std::string s1, std::string s2) const
-    {
-        (void)s2;
-        if (s1 == "0")
-        {
-            return "1";
-        }
-        return ("exp(" + s1 + ")");
-    }
+    std::string operator()(const std::string s1, const std::string s2, bool simplify = false) const;
 };
+/// Global instance of the exponential
 static const basis_exp exp;
 
 /// Natural logarithm
@@ -461,41 +263,15 @@ class basis_log : public basis_function
     basis_log():basis_function("log",FN_UNARY) {}
 
     /// Overload of operator(double, double)
-    double operator()(double x, double y) const 
-    {
-        (void) y;
-        return log(fabs(x));
-    }
+    double operator()(double x, double y) const;
 
     /// Overload of operator(DA,DA)
-    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const
-    {
-        (void) y;
-        if (cons(x)<0)
-        {
-            return log(-x);
-        }
-        else if (cons(x)>0)
-        {
-            return log(x);
-        }
-        else
-        {
-            throw derivative_error("Derivative of log does not exist at this point");
-        }
-    }
+    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const;
 
     /// Overload of operator(std::string, std::string)
-    std::string operator()(std::string s1, std::string s2) const
-    {
-        (void)s2;
-        if (s1 == "1")
-        {
-            return "0";
-        }
-        return ("log(abs(" + s1 + "))");
-    }
+    std::string operator()(const std::string s1, const std::string s2, bool simplify = false) const;
 };
+/// Global instance of the natural logarithm
 static const basis_log log;
 
 
@@ -507,26 +283,15 @@ class basis_sin : public basis_function
     basis_sin():basis_function("sin",FN_UNARY) {}
 
     /// Overload of operator(double, double)
-    double operator()(double x, double y) const 
-    {
-        (void) y;
-        return sin(x);
-    }
+    double operator()(double x, double y) const;
 
     /// Overload of operator(DA,DA)
-    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const
-    {
-        (void) y;
-        return sin(x);
-    }
+    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const;
 
     /// Overload of operator(std::string, std::string)
-    std::string operator()(std::string s1, std::string s2) const
-    {
-        (void)s2;
-        return ("sin(" + s1 + ")");
-    }
+    std::string operator()(const std::string s1, const std::string s2, bool simplify = false) const;
 };
+/// Global instance of the sine
 static const basis_sin sin;
 
 /// Cosine
@@ -537,26 +302,15 @@ class basis_cos : public basis_function
     basis_cos():basis_function("cos",FN_UNARY) {}
 
     /// Overload of operator(double, double)
-    double operator()(double x, double y) const 
-    {
-        (void) y;
-        return cos(x);
-    }
+    double operator()(double x, double y) const;
 
     /// Overload of operator(DA,DA)
-    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const
-    {
-        (void) y;
-        return cos(x);
-    }
+    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const;
 
     /// Overload of operator(std::string, std::string)
-    std::string operator()(std::string s1, std::string s2) const
-    {
-        (void)s2;
-        return ("cos(" + s1 + ")");
-    }
+    std::string operator()(const std::string s1, const std::string s2, bool simplify = false) const;
 };
+/// Global instance of the cosine
 static const basis_cos cos;
 
 /// Tangent
@@ -567,26 +321,15 @@ class basis_tan : public basis_function
     basis_tan():basis_function("tan",FN_UNARY) {}
 
     /// Overload of operator(double, double)
-    double operator()(double x, double y) const 
-    {
-        (void) y;
-        return tan(x);
-    }
+    double operator()(double x, double y) const;
 
     /// Overload of operator(DA,DA)
-    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const
-    {
-        (void) y;
-        return tan(x);
-    }
+    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const;
 
     /// Overload of operator(std::string, std::string)
-    std::string operator()(std::string s1, std::string s2) const
-    {
-        (void)s2;
-        return ("tan(" + s1 + ")");
-    }
+    std::string operator()(const std::string s1, const std::string s2, bool simplify = false) const;
 };
+/// Global instance of the tangent
 static const basis_tan tan;
 
 /// Arcsine
@@ -597,30 +340,15 @@ class basis_asin : public basis_function
     basis_asin():basis_function("asin",FN_UNARY) {}
 
     /// Overload of operator(double, double)
-    double operator()(double x, double y) const 
-    {
-        (void) y;
-        return asin(x);
-    }
+    double operator()(double x, double y) const;
 
     /// Overload of operator(DA,DA)
-    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const
-    {
-        (void)y;
-        if (fabs(cons(x))>=1.0)
-        {
-            throw derivative_error("Derivative of asin does not exist at this point");
-        }
-        return asin(x);
-    }
+    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const;
 
     /// Overload of operator(std::string, std::string)
-    std::string operator()(std::string s1, std::string s2) const
-    {
-        (void)s2;
-        return ("asin(" + s1 + ")");
-    }
+    std::string operator()(const std::string s1, const std::string s2, bool simplify = false) const;
 };
+/// Global instance of the arcsine
 static const basis_asin asin;
 
 /// Arccosine
@@ -631,30 +359,15 @@ class basis_acos : public basis_function
     basis_acos():basis_function("acos",FN_UNARY) {}
 
     /// Overload of operator(double, double)
-    double operator()(double x, double y) const 
-    {
-        (void) y;
-        return acos(x);
-    }
+    double operator()(double x, double y) const;
 
     /// Overload of operator(DA,DA)
-    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const
-    {
-        (void)y;
-        if (fabs(cons(x))>=1.0)
-        {
-            throw derivative_error("Derivative of acos does not exist at this point");
-        }
-        return acos(x);
-    }
+    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const;
 
     /// Overload of operator(std::string, std::string)
-    std::string operator()(std::string s1, std::string s2) const
-    {
-        (void)s2;
-        return ("acos(" + s1 + ")");
-    }
+    std::string operator()(const std::string s1, const std::string s2, bool simplify = false) const;
 };
+/// Global instance of the arccosine
 static const basis_acos acos;
 
 /// Arctan
@@ -665,26 +378,15 @@ class basis_atan : public basis_function
     basis_atan():basis_function("atan",FN_UNARY) {}
 
     /// Overload of operator(double, double)
-    double operator()(double x, double y) const 
-    {
-        (void) y;
-        return atan(x);
-    }
+    double operator()(double x, double y) const;
 
     /// Overload of operator(DA,DA)
-    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const
-    {
-        (void) y;
-        return atan(x);
-    }
+    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const;
 
     /// Overload of operator(std::string, std::string)
-    std::string operator()(std::string s1, std::string s2) const
-    {
-        (void)s2;
-        return ("atan(" + s1 + ")");
-    }
+    std::string operator()(const std::string s1, const std::string s2, bool simplify = false) const;
 };
+/// Global instance of the arctangent
 static const basis_atan atan;
 
 /// Hyperbolic sine
@@ -695,26 +397,15 @@ class basis_sinh : public basis_function
     basis_sinh():basis_function("sinh",FN_UNARY) {}
 
     /// Overload of operator(double, double)
-    double operator()(double x, double y) const 
-    {
-        (void) y;
-        return sinh(x);
-    }
+    double operator()(double x, double y) const;
 
     /// Overload of operator(DA,DA)
-    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const
-    {
-        (void) y;
-        return sinh(x);
-    }
+    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const;
 
     /// Overload of operator(std::string, std::string)
-    std::string operator()(std::string s1, std::string s2) const
-    {
-        (void)s2;
-        return ("sinh(" + s1 + ")");
-    }
+    std::string operator()(const std::string s1, const std::string s2, bool simplify = false) const;
 };
+/// Global instance of the hyperbolic sine
 static const basis_sinh sinh;
 
 /// Hyperbolic cosine
@@ -725,26 +416,15 @@ class basis_cosh : public basis_function
     basis_cosh():basis_function("cosh",FN_UNARY) {}
 
     /// Overload of operator(double, double)
-    double operator()(double x, double y) const 
-    {
-        (void) y;
-        return cosh(x);
-    }
+    double operator()(double x, double y) const;
 
     /// Overload of operator(DA,DA)
-    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const
-    {
-        (void) y;
-        return cosh(x);
-    }
+    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const;
 
     /// Overload of operator(std::string, std::string)
-    std::string operator()(std::string s1, std::string s2) const
-    {
-        (void)s2;
-        return ("cosh(" + s1 + ")");
-    }
+    std::string operator()(const std::string s1, const std::string s2, bool simplify = false) const;
 };
+/// Global instance of the hyperbolic cosine
 static const basis_cosh cosh;
 
 /// Hyperbolic tangent
@@ -755,26 +435,15 @@ class basis_tanh : public basis_function
     basis_tanh():basis_function("tanh",FN_UNARY) {}
 
     /// Overload of operator(double, double)
-    double operator()(double x, double y) const 
-    {
-        (void) y;
-        return tanh(x);
-    }
+    double operator()(double x, double y) const;
 
     /// Overload of operator(DA,DA)
-    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const
-    {
-        (void) y;
-        return tanh(x);
-    }
+    DACE::DA operator()(const DACE::DA& x, const DACE::DA& y) const;
 
     /// Overload of operator(std::string, std::string)
-    std::string operator()(std::string s1, std::string s2) const
-    {
-        (void)s2;
-        return ("tanh(" + s1 + ")");
-    }
+    std::string operator()(const std::string s1, const std::string s2, bool simplify = false) const;
 };
+/// Global instance of the hyperbolic tangent
 static const basis_tanh tanh;
 
 } // end of namespace dcgp

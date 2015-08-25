@@ -89,15 +89,31 @@ void expression::set(const std::vector<unsigned int>& x)
     update_active();
 }
 
-
-inline unsigned int factorial(unsigned int n)
-{
-    if (n==0) return 1;
-    unsigned int ret = 1;
-    for(auto i = 1u; i <= n; ++i)
-        ret *= i;
-    return ret;
+/// Output string representation of the expression with or without simplification
+std::vector<std::string> expression::operator()(const std::vector<std::string>& in, bool simplify) const
+{  
+    if(in.size() != m_n)
+    {
+        throw input_error("Input size is incompatible");
+    }
+    std::vector<std::string> retval(m_m);
+    std::map<unsigned int, std::string> node;
+    for (auto i : m_active_nodes) {
+        if (i < m_n) 
+        {
+            node[i] = in[i];
+        } else {
+            unsigned int idx = (i - m_n) * 3;
+            node[i] = m_f[m_x[idx]](node[m_x[idx + 1]], node[m_x[idx + 2]], simplify);
+        }
+    }
+    for (auto i = 0u; i<m_m; ++i)
+    {
+        retval[i] = node[m_x[(m_r * m_c) * 3 + i]];
+    }
+    return retval;
 }
+
 
 /// Accesses the derivatives of the expression
 /** 
