@@ -12,7 +12,7 @@ void function_set::push_back(const basis_function* f)
     const typename function_set::size_type size = this->size();
 
     for(unsigned int i = 0; i < size; i++)
-        if(at(i)==f) return;
+        if(this->operator[](i)==f) return;
     std::vector<const basis_function*>::push_back(f);
 }
 
@@ -28,7 +28,7 @@ void function_set::push_back(const function_set& f)
 
     reserve(this->size()+size);
     for(unsigned int i = 0; i < size; i++)
-        push_back(f.at(i));
+        push_back(f[i]);
 }
 
 /// Overload stream insertion operator for function_set
@@ -37,7 +37,7 @@ std::ostream &operator<<(std::ostream &os, const function_set &fs)
     const typename function_set::size_type len = fs.size();
     os << '[';
     for (typename function_set::size_type i = 0; i < len; ++i) {
-        os << fs[i].m_name;
+        os << fs[i]->m_name;
         if (i != len-1) {
             os << ", ";
         }
@@ -56,6 +56,34 @@ std::ostream &operator<<(std::ostream &os, const function_set &fs)
 function_set operator+(const function_set& a, const function_set& b)
 {
     function_set res(a);
+    res.push_back(b);
+
+    return res;
+}
+
+/// Merge a basis function and a function set
+/**
+ *  Merge a basis function and a function set by concatenation. Duplicate
+ *  functions are not added.
+ *  The order of the basis function and the function set is preserved.
+ */
+function_set operator+(const function_set& a, const basis_function* b)
+{
+    function_set res(a);
+    res.push_back(b);
+
+    return res;
+}
+
+/// Merge a basis function and a function set
+/**
+ *  Merge a basis function and a function set by concatenation. Duplicate
+ *  functions are not added.
+ *  The order of the basis function and the function set is preserved.
+ */
+function_set operator+(const basis_function* a, const function_set& b)
+{
+    function_set res = {a};
     res.push_back(b);
 
     return res;

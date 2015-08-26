@@ -104,7 +104,7 @@ std::vector<std::string> expression::operator()(const std::vector<std::string>& 
             node[i] = in[i];
         } else {
             unsigned int idx = (i - m_n) * 3;
-            node[i] = m_f[m_x[idx]](node[m_x[idx + 1]], node[m_x[idx + 2]], simplify);
+            node[i] = m_f[m_x[idx]]->operator()(node[m_x[idx + 1]], node[m_x[idx + 2]], simplify);
         }
     }
     for (auto i = 0u; i<m_m; ++i)
@@ -256,10 +256,10 @@ void expression::update_active()
 
         for (auto node_id : current)
         {
-            if (node_id >=m_n) // we insert the input nodes connections as they do not have any
+            if (node_id >=m_n)
             {
                 unsigned int idx = (node_id - m_n) * 3;
-                switch( m_f[m_x[idx]].m_type )
+                switch( m_f[m_x[idx]]->m_type )
                 {
                     case basis_function::FN_BINARY:
                         next.push_back(m_x[idx+2]);
@@ -271,7 +271,7 @@ void expression::update_active()
                         break;
                 }
             }
-            else{
+            else{ // we insert the input nodes as connections as they do not have any
                 m_active_nodes.push_back(node_id);
             }
         }
@@ -293,9 +293,18 @@ void expression::update_active()
         if (m_active_nodes[i] >= m_n) 
         {
             unsigned int idx = (m_active_nodes[i] - m_n) * 3;
-            m_active_genes.push_back(idx);
-            m_active_genes.push_back(idx + 1);
-            m_active_genes.push_back(idx + 2);
+            switch( m_f[m_x[idx]]->m_type )
+            {
+                case basis_function::FN_BINARY:
+                    m_active_genes.push_back(idx + 2);
+                    // fall through
+                case basis_function::FN_UNARY:
+                    m_active_genes.push_back(idx + 1);
+                    // fall through
+                case basis_function::FN_CONST:
+                    m_active_genes.push_back(idx);
+                    break;
+            }
         }
     }
     for (auto i = 0u; i<m_m; ++i) 

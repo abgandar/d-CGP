@@ -102,7 +102,7 @@ public:
                 node[i] = in[i];
             } else {
                 unsigned int idx = (i - m_n) * 3;
-                node[i] = m_f[m_x[idx]](node[m_x[idx + 1]], node[m_x[idx + 2]]);
+                node[i] = m_f[m_x[idx]]->operator()(node[m_x[idx + 1]], node[m_x[idx + 2]]);
             }
         }
         for (auto i = 0u; i<m_m; ++i)

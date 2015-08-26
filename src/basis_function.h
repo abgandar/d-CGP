@@ -104,7 +104,7 @@ class basis_cons : public basis_function
 {
     public:
     /// Constructor
-    basis_cons(const double val = 1.0):basis_function("cons("+boost::lexical_cast<std::string>(val)+")",FN_CONST), m_val(val) {}
+    basis_cons(const double val = 1.0):basis_function(boost::lexical_cast<std::string>(val),FN_CONST), m_val(val) {}
 
     /// Overload of operator(double, double)
     double operator()(double x, double y) const;

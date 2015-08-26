@@ -20,8 +20,6 @@ public:
 	function_set(const function_set& f) : std::vector<const basis_function*>(f) {};
 	function_set(std::initializer_list<const basis_function*> l) : std::vector<const basis_function*>(l) {};
 
-    /// Convenience function to return a reference to a basis function directly instead of a pointer
-    const basis_function& operator[](const typename function_set::size_type i) const { return *(std::vector<const basis_function*>::operator[](i)); };
     /// Append a function to a function set
     void push_back(const basis_function* f);
     /// Append another function set to a function set
@@ -41,6 +39,8 @@ public:
 
 std::ostream &operator<<(std::ostream &, const function_set &);
 function_set operator+(const function_set& a, const function_set& b);
+function_set operator+(const function_set& a, const basis_function* b);
+function_set operator+(const basis_function* a, const function_set& b);
 
 } // end of namespace dcgp
 

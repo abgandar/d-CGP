@@ -5,10 +5,11 @@
 #include <DA/DA.h>
 
 #include "src/dcgp.h"
+#include "src/wrapped_functions.h"
 
 int main() {
     // We define the set of functions we want to use
-    dcgp::function_set basic_set = dcgp::function_set::basic;
+    dcgp::function_set basic_set = dcgp::function_set::basic + &dcgp::log_sigmoid;
 
     // We instantiate a d-CGP expression
     unsigned int n_inputs = 3;
@@ -53,6 +54,7 @@ int main() {
     // We stream a symbolic representation of the expression
     std::vector<std::string> in_sym({"x","y","z"});
     std::cout << "Symbolic value = " << simple(in_sym) << std::endl;
+    std::cout << "Simplified symbolic value = " << simple(in_sym,true) << std::endl;
 
     return 0;
 }
